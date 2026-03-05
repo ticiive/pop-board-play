@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CharacterCard from "@/components/CharacterCard";
 import RoundButton from "@/components/RoundButton";
 import { Gamepad2 } from "lucide-react";
@@ -7,6 +8,7 @@ const players = ["P1", "P2", "P3", "P4", "P5", "P6"];
 const roundOptions = [3, 5, 10];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [selectedRounds, setSelectedRounds] = useState<number | null>(null);
 
@@ -17,6 +19,16 @@ const Index = () => {
   };
 
   const canStart = selectedPlayers.length >= 2 && selectedRounds !== null;
+
+  const handleStart = () => {
+    if (!canStart) return;
+    navigate("/game", {
+      state: {
+        players: selectedPlayers,
+        totalRounds: selectedRounds,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center px-5 py-6 max-w-md mx-auto">
@@ -64,6 +76,7 @@ const Index = () => {
       <div className="w-full mt-auto pb-4">
         <button
           disabled={!canStart}
+          onClick={handleStart}
           className={`
             w-full py-5 rounded-2xl border-[3px] font-bold text-xl transition-all duration-300
             ${
