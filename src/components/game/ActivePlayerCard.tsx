@@ -17,11 +17,11 @@ const CircleBtn = ({
   onClick: () => void;
   size?: "sm" | "md";
 }) => {
-  const dim = size === "sm" ? "w-9 h-9 text-xs" : "w-11 h-11 text-base";
+  const dim = size === "sm" ? "w-9 h-9 text-sm" : "w-11 h-11 text-base";
   return (
     <button
       onClick={onClick}
-      className={`${dim} rounded-full border-[3px] border-black/20 bg-white/20 text-white font-black hover:bg-white/30 active:scale-90 transition-all flex items-center justify-center shadow-[2px_2px_0px_rgba(0,0,0,0.2)]`}
+      className={`${dim} rounded-full border-2 border-secondary-foreground/30 bg-secondary-foreground/10 text-secondary-foreground font-bold hover:bg-secondary-foreground/20 active:scale-90 transition-all flex items-center justify-center`}
     >
       {label}
     </button>
@@ -31,83 +31,81 @@ const CircleBtn = ({
 const ActivePlayerCard = ({ player, onUpdateCoins, onUpdateStars, onEndTurn }: Props) => {
   return (
     <div
-      className="relative h-full rounded-3xl border-[3px] border-tangerine bg-tangerine p-4 flex gap-6 items-center"
+      className="relative h-full rounded-3xl border-[3px] border-tangerine bg-tangerine p-4 flex gap-4"
       style={{ boxShadow: "var(--pop-shadow-tangerine)" }}
     >
-      {/* LADO ESQUERDO: Avatar e Botões de Ação Rápida */}
-      <div className="flex flex-col items-center justify-between h-full py-1 min-w-[100px]">
-        <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center text-4xl shadow-inner">
+      {/* Esquerda: Avatar + Botões de Ação (Mantido como estava) */}
+      <div className="flex flex-col items-center justify-between py-2">
+        <div className="w-16 h-16 rounded-2xl bg-secondary-foreground/20 flex items-center justify-center text-3xl">
           🎮
         </div>
-        <div className="flex flex-col items-center text-center">
-          <h2 className="text-xl font-black text-white leading-tight uppercase">
+        <div className="flex flex-col items-center">
+          <h2 className="text-xl font-bold text-secondary-foreground mt-1">
             {player.label}
           </h2>
-          <div className="px-2 py-0.5 bg-black/10 rounded-full mt-1">
-            <p className="text-[10px] text-white font-black uppercase tracking-widest">
-              Ativo
-            </p>
-          </div>
+          <p className="text-xs text-secondary-foreground/70 font-semibold">
+            Jogador Ativo
+          </p>
         </div>
-        
-        <div className="flex gap-1.5 mt-2">
+        <div className="flex gap-2 mt-auto">
           {[Zap, Shield, Swords].map((Icon, i) => (
             <button
               key={i}
-              className="w-8 h-8 rounded-full bg-cobalt flex items-center justify-center border-[2px] border-black/20 hover:scale-110 active:scale-90 transition-all shadow-[2px_2px_0px_rgba(0,0,0,0.3)]"
+              className="w-10 h-10 rounded-full bg-cobalt flex items-center justify-center border-2 border-primary-foreground/20 hover:scale-110 active:scale-90 transition-all"
             >
-              <Icon className="w-4 h-4 text-white" />
+              <Icon className="w-4 h-4 text-primary-foreground" />
             </button>
           ))}
         </div>
       </div>
 
-      {/* CENTRO: Contadores com valor entre os botões */}
-      <div className="flex-1 flex flex-col justify-center gap-6 items-center">
+      {/* Centro: Contadores (Aqui mudamos apenas a ordem interna) */}
+      <div className="flex-1 flex flex-col justify-center gap-4">
         
-        {/* Layout Moedas: [-10] [-1] [VALOR] [+1] [+10] */}
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
+        {/* Moedas: Agora com botões nas pontas e valor no meio */}
+        <div className="flex items-center gap-3 justify-end"> {/* justify-end mantém os botões na direita como antes */}
+          <Coins className="w-8 h-8 text-secondary-foreground shrink-0" />
+          
+          <div className="flex items-center gap-1.5 ml-auto">
+            {/* Botões de menos primeiro */}
             <CircleBtn label="-10" onClick={() => onUpdateCoins(-10)} size="sm" />
             <CircleBtn label="-1" onClick={() => onUpdateCoins(-1)} />
-          </div>
-          
-          <div className="flex items-center gap-2 bg-black/20 px-4 py-2 rounded-2xl border-2 border-white/10 min-w-[120px] justify-center">
-            <Coins className="w-6 h-6 text-white" />
-            <span className="text-4xl font-black text-white tabular-nums">
+            
+            {/* Valor no Centro */}
+            <span className="text-4xl font-bold text-secondary-foreground min-w-[2ch] text-center mx-2">
               {player.coins}
             </span>
-          </div>
-
-          <div className="flex gap-1">
+            
+            {/* Botões de mais depois */}
             <CircleBtn label="+1" onClick={() => onUpdateCoins(1)} />
             <CircleBtn label="+10" onClick={() => onUpdateCoins(10)} size="sm" />
           </div>
         </div>
 
-        {/* Layout Estrelas: [-] [VALOR] [+] */}
-        <div className="flex items-center gap-4">
-          <CircleBtn label="-" onClick={() => onUpdateStars(-1)} />
+        {/* Estrelas: Seguindo a mesma lógica */}
+        <div className="flex items-center gap-3 justify-end">
+          <Star className="w-8 h-8 text-secondary-foreground shrink-0" />
           
-          <div className="flex items-center gap-2 bg-black/20 px-6 py-2 rounded-2xl border-2 border-white/10 min-w-[120px] justify-center">
-            <Star className="w-6 h-6 text-white" />
-            <span className="text-4xl font-black text-white tabular-nums">
+          <div className="flex items-center gap-1.5 ml-auto">
+            <CircleBtn label="-" onClick={() => onUpdateStars(-1)} />
+            
+            <span className="text-4xl font-bold text-secondary-foreground min-w-[2ch] text-center mx-2">
               {player.stars}
             </span>
+            
+            <CircleBtn label="+" onClick={() => onUpdateStars(1)} />
           </div>
-
-          <CircleBtn label="+" onClick={() => onUpdateStars(1)} />
         </div>
       </div>
 
-      {/* DIREITA: Botão Encerrar Rodada */}
-      <div className="flex items-center pr-2">
+      {/* Direita: Botão Encerrar (Mantido original) */}
+      <div className="flex items-end">
         <button
           onClick={onEndTurn}
-          className="h-24 w-24 rounded-2xl border-[4px] border-black/20 bg-destructive text-white font-black text-[10px] hover:scale-[1.05] active:scale-95 transition-all flex flex-col items-center justify-center gap-2 text-center p-2 leading-none shadow-[4px_4px_0px_rgba(0,0,0,0.2)]"
+          className="px-5 py-3 rounded-2xl border-[3px] border-destructive bg-destructive text-destructive-foreground font-bold text-sm hover:scale-[1.03] active:scale-95 transition-all whitespace-nowrap"
+          style={{ boxShadow: "3px 3px 0px hsl(0 70% 40%)" }}
         >
-          <span className="text-3xl">🔄</span>
-          ENCERRAR<br/>RODADA
+          ENCERRAR RODADA 🔄
         </button>
       </div>
     </div>
