@@ -22,20 +22,16 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: |
-          cd pop-board-play
-          bun install
+        run: bun install  # Removido o 'cd pop-board-play'
 
       - name: Build
-        run: |
-          cd pop-board-play
-          bun run build
+        run: bun run build  # Removido o 'cd pop-board-play'
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          path: pop-board-play/dist
-
+          path: dist  # O Vite gera a pasta 'dist' na raiz
+          
   deploy:
     needs: build_site
     runs-on: ubuntu-latest
