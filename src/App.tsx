@@ -13,22 +13,23 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/sorteio" element={<Sorteio />} />
-          <Route path="/timer" element={<Timer />} />
-          <Route path="/ranking" element={<Ranking />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+<QueryClientProvider client={queryClient}>
+  <TooltipProvider>
+    <Toaster />
+    <Sonner />
+    {/* Adicione o basename aqui embaixo */}
+    <BrowserRouter basename="/pop-board-play">
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/game" element={<Game />} />
+        <Route path="/sorteio" element={<Sorteio />} />
+        <Route path="/timer" element={<Timer />} />
+        <Route path="/ranking" element={<Ranking />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  </TooltipProvider>
+</QueryClientProvider>
 );
 
 export default App;
