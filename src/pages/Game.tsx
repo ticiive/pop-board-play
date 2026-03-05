@@ -9,20 +9,31 @@ const Game = () => {
   const navigate = useNavigate();
   
   // Captura os dados vindos do Setup (Index.tsx)
-  const { players: playerLabels = [], totalRounds = 3 } =
+  const { players: playerLabels = [], totalRounds = 10 } =
     (location.state as { players: string[]; totalRounds: number }) || {};
 
   // Inicializa os players mantendo a ORDEM do array playerLabels
-  const [playerOrder, setPlayerOrder] = useState<Player[]>(() =>
-    playerLabels.map((label: string) => ({
-      id: label,
-      label,
-      coins: 0,
-      stars: 0,
-    }))
-  );
+const [playerOrder, setPlayerOrder] = useState<Player[]>(() => {
+  // 1. Verifica se já existem players com dados (moedas/estrelas) vindos de outra tela
+  const existingPlayers = (location.state as any)?.players;
+  
+  // 2. Se existirem e já forem objetos (com coins e stars), usamos eles
+  if (existingPlayers && typeof existingPlayers[0] === 'object') {
+    return existingPlayers;
+  }
 
-  const [currentRound, setCurrentRound] = useState(1);
+  // 3. Caso contrário (primeira vez vindo do Setup), criamos do zero usando os labels
+  return playerLabels.map((label: string) => ({
+    id: label,
+    label,
+    coins: 0,
+    stars: 0,
+  }));
+});
+
+const [currentRound, setCurrentRound] = useState(() => {
+  return (location.state as any)?.currentRound || 1;
+});
   
   // O ponto de referência do ciclo é sempre quem foi selecionado PRIMEIRO no setup
   const startingPlayerId = useRef(playerLabels[0]);

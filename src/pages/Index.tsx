@@ -5,7 +5,7 @@ import RoundButton from "@/components/RoundButton";
 import { Gamepad2 } from "lucide-react";
 
 const players = ["P1", "P2", "P3", "P4", "P5", "P6"];
-const roundOptions = [3, 5, 10];
+const roundOptions = [10, 15, 20];
 const MAX_PLAYERS = 4; // Definindo o limite máximo
 
 const Index = () => {
