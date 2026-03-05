@@ -39,15 +39,25 @@ const Game = () => {
   const endTurn = () => {
     setPlayerOrder((prev) => {
       const rotated = [...prev.slice(1), prev[0]];
-      // Check if the next active player is the one who started the round
+      // Every time the starting player comes back, a full cycle is complete
       if (rotated[0].id === startingPlayerId.current) {
         const nextRound = currentRound + 1;
-        if (nextRound > totalRounds) {
-          // Navigate after state update
-          setTimeout(() => navigate("/sorteio", { state: { players: rotated } }), 0);
-          return rotated;
-        }
-        setCurrentRound(nextRound);
+        const isGameOver = nextRound > totalRounds;
+        // Navigate to /sorteio after every cycle
+        setTimeout(
+          () =>
+            navigate("/sorteio", {
+              state: {
+                players: rotated,
+                currentRound: isGameOver ? currentRound : nextRound,
+                totalRounds,
+                isGameOver,
+              },
+            }),
+          0
+        );
+        if (!isGameOver) setCurrentRound(nextRound);
+        return rotated;
       }
       return rotated;
     });
