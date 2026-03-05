@@ -29,7 +29,7 @@ const Index = () => {
       {/* Character Grid */}
       <section className="w-full mb-8">
         <h2 className="text-center text-lg font-bold text-cobalt mb-4">
-          Escolha os jogadores! 🎲
+          Escolha os jogadores! 
         </h2>
         <div className="grid grid-cols-2 gap-4">
           {players.map((p) => (
@@ -46,7 +46,7 @@ const Index = () => {
       {/* Rounds Section */}
       <section className="w-full mb-8">
         <h2 className="text-center text-lg font-bold text-cobalt mb-4">
-          Quantas rodadas vamos jogar? 🏆
+          Quantas rodadas vamos jogar? 
         </h2>
         <div className="flex gap-4">
           {roundOptions.map((r) => (
@@ -78,7 +78,7 @@ const Index = () => {
               : undefined
           }
         >
-          {canStart ? "🚀 Iniciar Jogo!" : "Selecione 2+ jogadores e rodadas"}
+          {canStart ? "Iniciar Jogo!" : "Selecione 2+ jogadores e rodadas"}
         </button>
       </div>
     </div>
