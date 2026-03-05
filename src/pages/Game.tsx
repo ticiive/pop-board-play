@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { Player } from "@/types/game";
 import ActivePlayerCard from "@/components/game/ActivePlayerCard";
-import PlayerMiniCard from "@/components/game/PlayerMiniCard";
+import InactivePlayerRow from "@/components/game/InactivePlayerRow";
 
 const Game = () => {
   const location = useLocation();
@@ -20,10 +20,10 @@ const Game = () => {
   );
 
   const [currentRound, setCurrentRound] = useState(1);
-  const [turnsInRound, setTurnsInRound] = useState(0);
+  const startingPlayerId = useRef(playerLabels[0]);
 
   const activePlayer = playerOrder[0];
-  const otherPlayers = playerOrder.slice(1);
+  const inactivePlayers = playerOrder.slice(1);
 
   const updateActivePlayer = (field: "coins" | "stars", delta: number) => {
     setPlayerOrder((prev) => {
@@ -37,26 +37,22 @@ const Game = () => {
   };
 
   const endTurn = () => {
-    const nextTurns = turnsInRound + 1;
-
-    if (nextTurns >= playerOrder.length) {
-      // Full round completed
-      const nextRound = currentRound + 1;
-      if (nextRound > totalRounds) {
-        navigate("/sorteio", { state: { players: playerOrder } });
-        return;
+    setPlayerOrder((prev) => {
+      const rotated = [...prev.slice(1), prev[0]];
+      // Check if the next active player is the one who started the round
+      if (rotated[0].id === startingPlayerId.current) {
+        const nextRound = currentRound + 1;
+        if (nextRound > totalRounds) {
+          // Navigate after state update
+          setTimeout(() => navigate("/sorteio", { state: { players: rotated } }), 0);
+          return rotated;
+        }
+        setCurrentRound(nextRound);
       }
-      setCurrentRound(nextRound);
-      setTurnsInRound(0);
-    } else {
-      setTurnsInRound(nextTurns);
-    }
-
-    // Rotate: first goes to end
-    setPlayerOrder((prev) => [...prev.slice(1), prev[0]]);
+      return rotated;
+    });
   };
 
-  // Redirect if no state
   useEffect(() => {
     if (!location.state) navigate("/");
   }, [location.state, navigate]);
@@ -64,16 +60,13 @@ const Game = () => {
   if (!location.state) return null;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-2">
-      {/* Landscape simulation container */}
-      <div className="w-full max-w-[100vh] aspect-video flex flex-col gap-3 p-4">
-        {/* Header */}
-        <div className="flex items-center justify-between px-2">
-          <span className="text-sm font-bold text-cobalt">
-            Rodada {currentRound}/{totalRounds}
-          </span>
-          <span className="text-sm font-semibold text-muted-foreground">
-            Turno {turnsInRound + 1}/{playerOrder.length}
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
+      {/* Top Section - 75% - Active Player */}
+      <div className="h-[75%] flex flex-col p-3 pb-2">
+        {/* Round indicator */}
+        <div className="flex items-center justify-between px-2 mb-2">
+          <span className="text-sm font-bold text-cobalt tracking-wide">
+            🎲 Rodada {currentRound}/{totalRounds}
           </span>
         </div>
 
@@ -86,13 +79,11 @@ const Game = () => {
             onEndTurn={endTurn}
           />
         </div>
+      </div>
 
-        {/* Bottom Grid - Other Players */}
-        <div className="flex gap-3 overflow-x-auto pb-1">
-          {otherPlayers.map((p) => (
-            <PlayerMiniCard key={p.id} player={p} />
-          ))}
-        </div>
+      {/* Bottom Section - 25% - Inactive Players */}
+      <div className="h-[25%] border-t-4 border-cobalt-light/30 bg-muted/50">
+        <InactivePlayerRow players={inactivePlayers} />
       </div>
     </div>
   );
