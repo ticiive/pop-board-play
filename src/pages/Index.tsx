@@ -6,6 +6,7 @@ import { Gamepad2 } from "lucide-react";
 
 const players = ["P1", "P2", "P3", "P4", "P5", "P6"];
 const roundOptions = [3, 5, 10];
+const MAX_PLAYERS = 4; // Definindo o limite máximo
 
 const Index = () => {
   const navigate = useNavigate();
@@ -13,9 +14,20 @@ const Index = () => {
   const [selectedRounds, setSelectedRounds] = useState<number | null>(null);
 
   const togglePlayer = (label: string) => {
-    setSelectedPlayers((prev) =>
-      prev.includes(label) ? prev.filter((p) => p !== label) : [...prev, label]
-    );
+    setSelectedPlayers((prev) => {
+      // Se já estiver selecionado, remove
+      if (prev.includes(label)) {
+        return prev.filter((p) => p !== label);
+      }
+      
+      // Se não estiver selecionado e já atingiu o limite, não faz nada
+      if (prev.length >= MAX_PLAYERS) {
+        return prev;
+      }
+
+      // Adiciona ao final da lista (preservando a ordem de clique)
+      return [...prev, label];
+    });
   };
 
   const canStart = selectedPlayers.length >= 2 && selectedRounds !== null;
@@ -24,7 +36,7 @@ const Index = () => {
     if (!canStart) return;
     navigate("/game", {
       state: {
-        players: selectedPlayers,
+        players: selectedPlayers, // Enviando na ordem que foram clicados
         totalRounds: selectedRounds,
       },
     });
@@ -40,18 +52,31 @@ const Index = () => {
 
       {/* Character Grid */}
       <section className="w-full mb-8">
-        <h2 className="text-center text-lg font-bold text-cobalt mb-4">
-          Escolha os jogadores! 
-        </h2>
+        <div className="text-center mb-4">
+          <h2 className="text-lg font-bold text-cobalt">
+            Escolha os jogadores! 
+          </h2>
+          <p className="text-sm text-cobalt/60">
+            {selectedPlayers.length} de {MAX_PLAYERS} selecionados
+          </p>
+        </div>
+        
         <div className="grid grid-cols-2 gap-4">
-          {players.map((p) => (
-            <CharacterCard
-              key={p}
-              label={p}
-              selected={selectedPlayers.includes(p)}
-              onClick={() => togglePlayer(p)}
-            />
-          ))}
+          {players.map((p) => {
+            // Encontra a posição do jogador na fila (1, 2, 3 ou 4)
+            const orderIndex = selectedPlayers.indexOf(p);
+            return (
+              <CharacterCard
+                key={p}
+                label={p}
+                selected={orderIndex !== -1}
+                // Dica: Você pode atualizar seu CharacterCard para receber essa prop 'order'
+                // e exibir um número pequeno no canto do card
+                order={orderIndex !== -1 ? orderIndex + 1 : undefined}
+                onClick={() => togglePlayer(p)}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -60,7 +85,7 @@ const Index = () => {
         <h2 className="text-center text-lg font-bold text-cobalt mb-4">
           Quantas rodadas vamos jogar? 
         </h2>
-        <div className="flex gap-4">
+        <div className="flex justify-center gap-4">
           {roundOptions.map((r) => (
             <RoundButton
               key={r}
@@ -91,7 +116,9 @@ const Index = () => {
               : undefined
           }
         >
-          {canStart ? "Iniciar Jogo!" : "Selecione 2+ jogadores e rodadas"}
+          {canStart 
+            ? `Iniciar com ${selectedPlayers.length} jogadores` 
+            : "Selecione 2-4 jogadores e rodadas"}
         </button>
       </div>
     </div>

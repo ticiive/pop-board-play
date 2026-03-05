@@ -7,9 +7,12 @@ import InactivePlayerRow from "@/components/game/InactivePlayerRow";
 const Game = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { players: playerLabels = ["P1", "P2", "P3"], totalRounds = 3 } =
+  
+  // Captura os dados vindos do Setup (Index.tsx)
+  const { players: playerLabels = [], totalRounds = 3 } =
     (location.state as { players: string[]; totalRounds: number }) || {};
 
+  // Inicializa os players mantendo a ORDEM do array playerLabels
   const [playerOrder, setPlayerOrder] = useState<Player[]>(() =>
     playerLabels.map((label: string) => ({
       id: label,
@@ -20,6 +23,8 @@ const Game = () => {
   );
 
   const [currentRound, setCurrentRound] = useState(1);
+  
+  // O ponto de referência do ciclo é sempre quem foi selecionado PRIMEIRO no setup
   const startingPlayerId = useRef(playerLabels[0]);
 
   const activePlayer = playerOrder[0];
@@ -38,49 +43,69 @@ const Game = () => {
 
   const endTurn = () => {
     setPlayerOrder((prev) => {
+      // Rotaciona a fila: o primeiro vai para o fim
       const rotated = [...prev.slice(1), prev[0]];
-      // Every time the starting player comes back, a full cycle is complete
+      
+      // Verificamos se quem assumiu agora o posto de 'Ativo' é o primeiro jogador original
+      // Se sim, significa que TODOS jogaram e o ciclo fechou.
       if (rotated[0].id === startingPlayerId.current) {
         const nextRound = currentRound + 1;
-        const isGameOver = nextRound > totalRounds;
-        // Navigate to /sorteio after every cycle
+        const isGameOver = currentRound >= totalRounds;
+
+        // Navega para /sorteio imediatamente após fechar o ciclo de todos os jogadores
         setTimeout(
           () =>
             navigate("/sorteio", {
               state: {
-                players: rotated,
-                currentRound: isGameOver ? currentRound : nextRound,
+                players: rotated, // Passa os jogadores com as moedas atuais
+                currentRound,
                 totalRounds,
                 isGameOver,
               },
             }),
           0
         );
-        if (!isGameOver) setCurrentRound(nextRound);
+
+        if (!isGameOver) {
+          setCurrentRound(nextRound);
+        }
         return rotated;
       }
+      
       return rotated;
     });
   };
 
+  // Redireciona para o setup se não houver estado (acesso direto pela URL)
   useEffect(() => {
-    if (!location.state) navigate("/");
-  }, [location.state, navigate]);
+    if (!location.state || playerLabels.length === 0) {
+      navigate("/");
+    }
+  }, [location.state, navigate, playerLabels.length]);
 
-  if (!location.state) return null;
+  if (!location.state || playerOrder.length === 0) return null;
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
-      {/* Top Section - 75% - Active Player */}
-      <div className="h-[75%] flex flex-col p-3 pb-2">
-        {/* Round indicator */}
+      {/* Top Section - 75% - Jogador Ativo */}
+      <div className="h-[75%] flex flex-col p-4 pb-2">
         <div className="flex items-center justify-between px-2 mb-2">
-          <span className="text-sm font-bold text-cobalt tracking-wide">
-            🎲 Rodada {currentRound}/{totalRounds}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xs font-black text-cobalt/40 uppercase tracking-widest">
+              Status da Partida
+            </span>
+            <span className="text-lg font-bold text-cobalt">
+              Rodada {currentRound} <span className="text-cobalt/30">/ {totalRounds}</span>
+            </span>
+          </div>
+          {/* Badge indicando quantos faltam para o sorteio */}
+          <div className="bg-tangerine/10 px-3 py-1 rounded-full border border-tangerine/20">
+            <span className="text-xs font-bold text-tangerine">
+              Turno {playerLabels.indexOf(activePlayer.id) + 1} de {playerLabels.length}
+            </span>
+          </div>
         </div>
 
-        {/* Active Player Card */}
         <div className="flex-1 min-h-0">
           <ActivePlayerCard
             player={activePlayer}
@@ -91,8 +116,8 @@ const Game = () => {
         </div>
       </div>
 
-      {/* Bottom Section - 25% - Inactive Players */}
-      <div className="h-[25%] border-t-4 border-cobalt-light/30 bg-muted/50">
+      {/* Bottom Section - 25% - Próximos Jogadores */}
+      <div className="h-[25%] border-t-4 border-cobalt-light/20 bg-muted/30">
         <InactivePlayerRow players={inactivePlayers} />
       </div>
     </div>
