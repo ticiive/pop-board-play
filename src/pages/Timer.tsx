@@ -27,17 +27,9 @@ const Timer = () => {
   const handleTimeUp = () => setFinished(true);
 
   const handleContinue = () => {
-    if (isGameOver) {
-      navigate("/ranking", { state: { players } });
-    } else {
-      navigate("/game", {
-        state: {
-          players: players.map((p: any) => p.label || p),
-          totalRounds,
-          currentRound,
-        },
-      });
-    }
+    navigate("/minigame-ranking", {
+      state: { players, currentRound, totalRounds, isGameOver },
+    });
   };
 
   return (
