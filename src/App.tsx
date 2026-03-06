@@ -8,6 +8,7 @@ import Game from "./pages/Game";
 import Sorteio from "./pages/Sorteio";
 import Timer from "./pages/Timer";
 import Ranking from "./pages/Ranking";
+import MinigameRanking from "./pages/MinigameRanking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
