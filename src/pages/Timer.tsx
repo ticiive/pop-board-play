@@ -1,14 +1,65 @@
-import { Timer as TimerIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import CircularTimer from "@/components/game/CircularTimer";
+
+const DEFAULT_TIME = 30; // seconds
 
 const Timer = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const { players, currentRound, totalRounds, isGameOver } =
+    (location.state as {
+      players: any[];
+      currentRound: number;
+      totalRounds: number;
+      isGameOver: boolean;
+    }) || {};
+
+  const [finished, setFinished] = useState(false);
+
+  useEffect(() => {
+    if (!location.state) navigate("/");
+  }, [location.state, navigate]);
+
+  if (!location.state) return null;
+
+  const handleTimeUp = () => setFinished(true);
+
+  const handleContinue = () => {
+    if (isGameOver) {
+      navigate("/ranking", { state: { players } });
+    } else {
+      navigate("/game", {
+        state: {
+          players: players.map((p: any) => p.label || p),
+          totalRounds,
+          currentRound,
+        },
+      });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-5 py-6">
-      <TimerIcon className="w-16 h-16 text-tangerine mb-4" />
-      <h1 className="text-3xl font-bold text-cobalt mb-2">Timer</h1>
-      <p className="text-muted-foreground font-semibold">Em breve...</p>
+    <div className="h-screen w-screen flex flex-col items-center justify-center overflow-hidden bg-background px-4 gap-6">
+      <h1 className="text-2xl font-bold text-cobalt tracking-tight">
+        ⏱ MINIGAME
+      </h1>
+
+      <CircularTimer initialTime={DEFAULT_TIME} onTimeUp={handleTimeUp} />
+
+      {finished && (
+        <motion.button
+          onClick={handleContinue}
+          className="px-10 py-4 rounded-2xl border-[3px] border-tangerine bg-tangerine text-secondary-foreground font-bold text-lg tracking-wide"
+          style={{ boxShadow: "var(--pop-shadow-tangerine)" }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {isGameOver ? "🏆 Ver Ranking" : "▶ Continuar Jogo"}
+        </motion.button>
+      )}
     </div>
   );
 };
