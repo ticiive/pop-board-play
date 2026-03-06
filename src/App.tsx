@@ -26,6 +26,7 @@ const App = () => (
         <Route path="/sorteio" element={<Sorteio />} />
         <Route path="/timer" element={<Timer />} />
         <Route path="/ranking" element={<Ranking />} />
+        <Route path="/minigame-ranking" element={<MinigameRanking />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
