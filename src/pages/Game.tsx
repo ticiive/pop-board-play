@@ -60,7 +60,6 @@ const [currentRound, setCurrentRound] = useState(() => {
       // Verificamos se quem assumiu agora o posto de 'Ativo' é o primeiro jogador original
       // Se sim, significa que TODOS jogaram e o ciclo fechou.
       if (rotated[0].id === startingPlayerId.current) {
-        const nextRound = currentRound + 1;
         const isGameOver = currentRound >= totalRounds;
 
         // Navega para /sorteio imediatamente após fechar o ciclo de todos os jogadores
@@ -68,7 +67,7 @@ const [currentRound, setCurrentRound] = useState(() => {
           () =>
             navigate("/sorteio", {
               state: {
-                players: rotated, // Passa os jogadores com as moedas atuais
+                players: rotated,
                 currentRound,
                 totalRounds,
                 isGameOver,
@@ -77,9 +76,6 @@ const [currentRound, setCurrentRound] = useState(() => {
           0
         );
 
-        if (!isGameOver) {
-          setCurrentRound(nextRound);
-        }
         return rotated;
       }
       

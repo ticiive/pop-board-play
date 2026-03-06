@@ -16,6 +16,9 @@ const MEDAL_COLORS = [
   "border-neon-green bg-neon-green/15 text-neon-green",
 ];
 
+// Coins awarded by position index (0-based)
+const COIN_REWARDS = [3, 2, 1];
+
 const MinigameRanking = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,8 +48,22 @@ const MinigameRanking = () => {
   const allFilled = positions.length > 0 && positions.every((p) => p.player !== null);
 
   const handleSelectPlayer = (player: Player) => {
-    if (selectedIds.has(player.id)) return;
+    // If already ranked, remove them
+    if (selectedIds.has(player.id)) {
+      setPositions((prev) =>
+        prev.map((pos) =>
+          pos.player?.id === player.id ? { ...pos, player: null } : pos
+        )
+      );
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(player.id);
+        return next;
+      });
+      return;
+    }
 
+    // Place in first empty slot
     const firstEmpty = positions.findIndex((p) => p.player === null);
     if (firstEmpty === -1) return;
 
@@ -58,40 +75,23 @@ const MinigameRanking = () => {
     setSelectedIds((prev) => new Set(prev).add(player.id));
   };
 
-  const handleUndo = () => {
-    // Remove the last placed player
-    const lastFilledIdx = [...positions]
-      .reverse()
-      .findIndex((p) => p.player !== null);
-    if (lastFilledIdx === -1) return;
-
-    const actualIdx = positions.length - 1 - lastFilledIdx;
-    const removedPlayer = positions[actualIdx].player;
-
-    setPositions((prev) => {
-      const updated = [...prev];
-      updated[actualIdx] = { ...updated[actualIdx], player: null };
-      return updated;
+  const handleContinue = () => {
+    // Award coins by position
+    const updatedPlayers = players.map((p) => {
+      const posIdx = positions.findIndex((pos) => pos.player?.id === p.id);
+      const reward = posIdx >= 0 && posIdx < COIN_REWARDS.length ? COIN_REWARDS[posIdx] : 0;
+      return { ...p, coins: p.coins + reward };
     });
 
-    if (removedPlayer) {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(removedPlayer.id);
-        return next;
-      });
-    }
-  };
-
-  const handleContinue = () => {
     if (isGameOver) {
-      navigate("/ranking", { state: { players } });
+      navigate("/ranking", { state: { players: updatedPlayers } });
     } else {
+      // Increment round here to persist across navigation
       navigate("/game", {
         state: {
-          players,
+          players: updatedPlayers,
           totalRounds,
-          currentRound,
+          currentRound: currentRound + 1,
         },
       });
     }
@@ -112,6 +112,7 @@ const MinigameRanking = () => {
         <div className="flex-1 flex flex-col gap-2">
           {positions.map((pos, i) => {
             const medalClass = i < 3 ? MEDAL_COLORS[i] : "border-muted bg-muted/30 text-muted-foreground";
+            const reward = i < COIN_REWARDS.length ? `+${COIN_REWARDS[i]} 🪙` : "";
             return (
               <motion.div
                 key={pos.position}
@@ -139,6 +140,9 @@ const MinigameRanking = () => {
                       <span className="text-lg font-bold text-foreground">
                         {pos.player.label}
                       </span>
+                      {reward && (
+                        <span className="text-xs font-bold opacity-70">{reward}</span>
+                      )}
                     </motion.div>
                   ) : (
                     <motion.span
@@ -174,10 +178,9 @@ const MinigameRanking = () => {
                 <motion.button
                   key={player.id}
                   onClick={() => handleSelectPlayer(player)}
-                  disabled={isSelected}
                   className={`absolute w-16 h-16 rounded-full border-[3px] flex items-center justify-center font-bold text-sm transition-all ${
                     isSelected
-                      ? "border-muted bg-muted/30 text-muted-foreground opacity-30 cursor-not-allowed"
+                      ? "border-neon-green bg-neon-green/20 text-neon-green opacity-60"
                       : "border-cobalt bg-card text-cobalt hover:scale-110 hover:border-tangerine hover:text-tangerine active:scale-95"
                   }`}
                   style={{
@@ -185,27 +188,14 @@ const MinigameRanking = () => {
                     top: `calc(50% + ${y}px - 2rem)`,
                     boxShadow: isSelected ? "none" : "var(--pop-shadow-cobalt)",
                   }}
-                  whileHover={!isSelected ? { scale: 1.1 } : undefined}
-                  whileTap={!isSelected ? { scale: 0.9 } : undefined}
+                  whileHover={{ scale: isSelected ? 0.95 : 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   {isSelected ? "✓" : player.label.slice(0, 3)}
                 </motion.button>
               );
             })}
           </div>
-
-          {/* Undo button */}
-          {selectedIds.size > 0 && !allFilled && (
-            <motion.button
-              onClick={handleUndo}
-              className="text-sm font-bold text-muted-foreground hover:text-destructive transition-colors"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              ↩ Desfazer
-            </motion.button>
-          )}
         </div>
       </div>
 
