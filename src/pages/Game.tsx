@@ -1,48 +1,90 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { Player } from "@/types/game";
 import ActivePlayerCard from "@/components/game/ActivePlayerCard";
 import InactivePlayerRow from "@/components/game/InactivePlayerRow";
 
+interface GameLocationState {
+  players?: Array<Player | string>;
+  totalRounds?: number;
+  currentRound?: number;
+}
+
+const normalizePlayers = (rawPlayers: Array<Player | string> = []): Player[] =>
+  rawPlayers.map((player) => {
+    if (typeof player === "string") {
+      return {
+        id: player,
+        label: player,
+        coins: 0,
+        stars: 0,
+      };
+    }
+
+    return {
+      id: player.id,
+      label: player.label,
+      coins: player.coins ?? 0,
+      stars: player.stars ?? 0,
+    };
+  });
+
 const Game = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Captura os dados vindos do Setup (Index.tsx)
-  const { players: playerLabels = [], totalRounds = 10 } =
-    (location.state as { players: string[]; totalRounds: number }) || {};
 
-  // Inicializa os players mantendo a ORDEM do array playerLabels
-const [playerOrder, setPlayerOrder] = useState<Player[]>(() => {
-  // 1. Verifica se já existem players com dados (moedas/estrelas) vindos de outra tela
-  const existingPlayers = (location.state as any)?.players;
-  
-  // 2. Se existirem e já forem objetos (com coins e stars), usamos eles
-  if (existingPlayers && typeof existingPlayers[0] === 'object') {
-    return existingPlayers;
-  }
+  const state = (location.state as GameLocationState) || {};
+  const totalRounds = state.totalRounds ?? 10;
+  const currentRound = state.currentRound ?? 1;
 
-  // 3. Caso contrário (primeira vez vindo do Setup), criamos do zero usando os labels
-  return playerLabels.map((label: string) => ({
-    id: label,
-    label,
-    coins: 0,
-    stars: 0,
-  }));
-});
+  const initialPlayers = useMemo(() => normalizePlayers(state.players), [state.players]);
 
-const [currentRound, setCurrentRound] = useState(() => {
-  return (location.state as any)?.currentRound || 1;
-});
-  
-  // O ponto de referência do ciclo é sempre quem foi selecionado PRIMEIRO no setup
-  const startingPlayerId = useRef(playerLabels[0]);
+  const [playerOrder, setPlayerOrder] = useState<Player[]>(initialPlayers);
+  const [turnIndex, setTurnIndex] = useState(0);
+  const [turnsPlayed, setTurnsPlayed] = useState(0);
+  const [playedThisRound, setPlayedThisRound] = useState<string[]>([]);
+  const [isFinishingRound, setIsFinishingRound] = useState(false);
+
+  useEffect(() => {
+    if (!location.state || initialPlayers.length === 0) {
+      navigate("/");
+      return;
+    }
+
+    setPlayerOrder(initialPlayers);
+  }, [initialPlayers, location.state, navigate]);
+
+  // Protocolo de Reset Rigoroso: sempre que a rodada mudar, zera controles de turno
+  useEffect(() => {
+    setTurnIndex(0);
+    setTurnsPlayed(0);
+    setPlayedThisRound([]);
+    setIsFinishingRound(false);
+  }, [currentRound]);
+
+  const finishRound = (playersAfterRound: Player[]) => {
+    if (isFinishingRound) return;
+
+    setIsFinishingRound(true);
+    const isGameOver = currentRound >= totalRounds;
+
+    navigate("/sorteio", {
+      state: {
+        players: playersAfterRound,
+        currentRound,
+        totalRounds,
+        isGameOver,
+      },
+    });
+  };
 
   const activePlayer = playerOrder[0];
   const inactivePlayers = playerOrder.slice(1);
 
   const updateActivePlayer = (field: "coins" | "stars", delta: number) => {
     setPlayerOrder((prev) => {
+      if (prev.length === 0) return prev;
+
       const updated = [...prev];
       updated[0] = {
         ...updated[0],
@@ -53,47 +95,34 @@ const [currentRound, setCurrentRound] = useState(() => {
   };
 
   const endTurn = () => {
-    setPlayerOrder((prev) => {
-      // Rotaciona a fila: o primeiro vai para o fim
-      const rotated = [...prev.slice(1), prev[0]];
-      
-      // Verificamos se quem assumiu agora o posto de 'Ativo' é o primeiro jogador original
-      // Se sim, significa que TODOS jogaram e o ciclo fechou.
-      if (rotated[0].id === startingPlayerId.current) {
-        const isGameOver = currentRound >= totalRounds;
+    if (!activePlayer || isFinishingRound || playerOrder.length === 0) return;
 
-        // Navega para /sorteio imediatamente após fechar o ciclo de todos os jogadores
-        setTimeout(
-          () =>
-            navigate("/sorteio", {
-              state: {
-                players: rotated,
-                currentRound,
-                totalRounds,
-                isGameOver,
-              },
-            }),
-          0
-        );
+    const rotated = [...playerOrder.slice(1), playerOrder[0]];
+    const nextTurnIndex = turnIndex + 1;
+    const nextPlayedThisRound = playedThisRound.includes(activePlayer.id)
+      ? playedThisRound
+      : [...playedThisRound, activePlayer.id];
+    const nextTurnsPlayed = nextPlayedThisRound.length;
 
-        return rotated;
-      }
-      
-      return rotated;
-    });
+    console.log(
+      `Rodada: ${currentRound} | Turno: ${nextTurnIndex} | Player Atual: ${activePlayer.label} | Total de Players: ${playerOrder.length}`
+    );
+
+    setPlayerOrder(rotated);
+    setTurnIndex(nextTurnIndex);
+    setPlayedThisRound(nextPlayedThisRound);
+    setTurnsPlayed(nextTurnsPlayed);
+
+    // Condição de saída universal por rodada
+    if (nextTurnsPlayed >= playerOrder.length) {
+      finishRound(rotated);
+    }
   };
 
-  // Redireciona para o setup se não houver estado (acesso direto pela URL)
-  useEffect(() => {
-    if (!location.state || playerLabels.length === 0) {
-      navigate("/");
-    }
-  }, [location.state, navigate, playerLabels.length]);
-
-  if (!location.state || playerOrder.length === 0) return null;
+  if (!location.state || playerOrder.length === 0 || !activePlayer) return null;
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
+    <div key={`round-${currentRound}`} className="h-screen w-screen flex flex-col overflow-hidden bg-background">
       {/* Top Section - 75% - Jogador Ativo */}
       <div className="h-[75%] flex flex-col p-4 pb-2">
         <div className="flex items-center justify-between px-2 mb-2">
@@ -105,10 +134,9 @@ const [currentRound, setCurrentRound] = useState(() => {
               Rodada {currentRound} <span className="text-cobalt/30">/ {totalRounds}</span>
             </span>
           </div>
-          {/* Badge indicando quantos faltam para o sorteio */}
           <div className="bg-tangerine/10 px-3 py-1 rounded-full border border-tangerine/20">
             <span className="text-xs font-bold text-tangerine">
-              Turno {playerLabels.indexOf(activePlayer.id) + 1} de {playerLabels.length}
+              Turno {Math.min(turnsPlayed + 1, playerOrder.length)} de {playerOrder.length}
             </span>
           </div>
         </div>
