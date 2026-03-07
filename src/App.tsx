@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Game from "./pages/Game";
 import Sorteio from "./pages/Sorteio";
@@ -18,10 +19,10 @@ const App = () => (
   <TooltipProvider>
     <Toaster />
     <Sonner />
-    {/* Adicione o basename aqui embaixo */}
     <BrowserRouter basename="/pop-board-play">
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/setup" element={<Index />} />
         <Route path="/game" element={<Game />} />
         <Route path="/sorteio" element={<Sorteio />} />
         <Route path="/timer" element={<Timer />} />
